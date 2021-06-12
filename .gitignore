@@ -1,0 +1,8 @@
+# folders
+./data/
+./.vscode/
+
+# compilation and executable files 
+*.o
+xsmtp
+ssha
