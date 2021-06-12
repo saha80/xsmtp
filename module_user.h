@@ -22,10 +22,14 @@
 
 #include "common.h"
 
-int check_user();
-void auth(int sockfd);
-int check_name_pass(char *name, char *pass);
-void user_quit();
+// find if user exists
+bool check_user(const char *const from_user);
+
+// user authentication
+void auth(const int sockfd, int &mail_stat);
+
+// user logout
+void user_quit(const char *const from_user);
 
 //extern void send_data(int sockfd, const char* data);
 //extern char *base64_decode(char *s);

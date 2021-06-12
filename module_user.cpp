@@ -21,124 +21,84 @@
 #include "module_user.h"
 #include "module_mail.h"
 
-// find if user exists
-int check_user()
+using namespace std;
+
+// check username and passwd from file
+bool check_name_pass(const char *const name, const char *const pass);
+
+bool check_user(const char *const from_user)
 {
-    FILE *fp;
-    char file[80] = "";
+    const auto file_name = string(data_dir) + userinfo;
+    const auto strlen_from_user = strlen(from_user);
+    FILE *fp = fopen(file_name.c_str(), "r"); // todo: change FILE* to std::ifstream
     char data[60];
-
-    strcpy(file, data_dir);
-    strcat(file, userinfo);
-
-    fp = fopen(file, "r");
-    while (fgets(data, sizeof(data), fp) != NULL)
+    if (!fp)
     {
-        if (strncmp(from_user, data, strlen(from_user)) == 0) // valid user
-            return 1;
+        perror("File opening failed");
+        exit(EXIT_FAILURE);
     }
-    return 0;
+    while (fgets(data, sizeof(data), fp))
+    {
+        if (strncmp(from_user, data, strlen_from_user) == 0) // valid user
+        {
+            fclose(fp);
+            return true;
+        }
+    }
+    fclose(fp);
+    return false;
 }
 
-// user authentication
-void auth(int sockfd)
+void auth(const int sockfd, int &mail_stat)
 {
     char ename[50], epass[50];
-    char *name, *pass;
-    int len;
+    std::vector<char> name, pass;
 
     send_data(sockfd, reply_code[25]); // require username
     sleep(3);
-    len = recv(sockfd, ename, sizeof(ename), 0);
-    if (len > 0)
+
+    if (recv(sockfd, ename, sizeof(ename), 0) <= 0)
+        send_data(sockfd, reply_code[16]);
+
+    cout << "Request stream: " << ename << endl;
+    name = base64_decode(ename);
+    cout << "Decoded username: " << name.data() << endl;
+    send_data(sockfd, reply_code[26]); // require passwd
+    sleep(3);
+
+    if (recv(sockfd, epass, sizeof(epass), 0) <= 0)
+        send_data(sockfd, reply_code[16]);
+
+    cout << "Request stream: " << epass << endl;
+    pass = base64_decode(epass);
+    cout << "Decoded password: " << pass.data() << endl;
+
+    if (check_name_pass(name.data(), pass.data())) // check username and passwd
     {
-        cout << "Request stream: " << ename << endl;
-        name = base64_decode(ename);
-        cout << "Decoded username: " << name << endl;
-        send_data(sockfd, reply_code[26]); // require passwd
-        sleep(3);
-        len = recv(sockfd, epass, sizeof(epass), 0);
-        if (len > 0)
-        {
-            cout << "Request stream: " << epass << endl;
-            pass = base64_decode(epass);
-            cout << "Decoded password: " << pass << endl;
-            if (check_name_pass(name, pass))
-            { // check username and passwd
-                mail_stat = 13;
-                send_data(sockfd, reply_code[27]);
-            }
-            else
-            {
-                send_data(sockfd, reply_code[16]);
-            }
-        }
-        else
-        {
-            send_data(sockfd, reply_code[16]);
-        }
+        mail_stat = 13; // changing mail status
+        send_data(sockfd, reply_code[27]);
     }
     else
-    {
         send_data(sockfd, reply_code[16]);
-    }
 }
 
-// check username and passwd from file
-int check_name_pass(char *name, char *pass)
+void user_quit(const char *const from_user)
 {
-    FILE *fp;
-    char file[80], data[60];
-
-    strcpy(file, data_dir);
-    strcat(file, userinfo);
-    fp = fopen(file, "r");
-    while (fgets(data, sizeof(data), fp) != NULL)
+    const auto file_name = string(data_dir) + userstat;
+    const auto strlen_from_user = strlen(from_user);
+    FILE *fp = fopen(file_name.c_str(), "w+"); // todo: change FILE* to std::ifstream
+    char data[60];
+    if (!fp)
     {
-        if (strncmp(data, name, strlen(name)) == 0)
-        { // find username
-            char *p;
-            p = strchr(data, ' ');
-            if (strncmp(p + 1, pass, strlen(pass)) == 0)
-            { // valid passwd
-                fclose(fp);
-                strcpy(file, data_dir);
-                strcat(file, userstat);
-                fp = fopen(file, "w+");
-                strcat(name, " on"); // change the status of the user to ON
-                fwrite(name, 1, strlen(name), fp);
-                fclose(fp);
-                return 1; // success
-            }
-            else
-            { // invalid passwd
-                return 0;
-            }
-        }
+        perror("File opening failed");
+        exit(EXIT_FAILURE);
     }
-    return 0; // invalid username
-}
-
-// user logout
-void user_quit()
-{
-    FILE *fp;
-    char file[80], data[60];
-    int flag = 0, len;
-
-    strcpy(file, data_dir);
-    strcat(file, userstat);
-    fp = fopen(file, "w+");
-    while (fgets(data, sizeof(data), fp) != NULL)
+    while (fgets(data, sizeof(data), fp) != nullptr)
     {
-        if (strncmp(data, from_user, strlen(from_user)) == 0)
+        if (strncmp(data, from_user, strlen_from_user) == 0)
         {
-            flag = 1;
-        }
-        if (flag)
-        {
-            len = strlen(data);
-            if (fgets(data, sizeof(data), fp) != NULL)
+            long len = strlen(data);
+            if (fgets(data, sizeof(data), fp) != nullptr)
             {
                 len = -len;
                 fseek(fp, len, SEEK_CUR);
@@ -149,4 +109,43 @@ void user_quit()
         }
     }
     fclose(fp);
+}
+
+bool check_name_pass(const char *const name, const char *const pass)
+{
+    FILE *fp;
+    char file[80], data[60];
+    strcpy(file, data_dir);
+    strcat(file, userinfo);
+
+    fp = fopen(file, "r");
+    if (!fp)
+    {
+        perror("File opening failed");
+        exit(EXIT_FAILURE);
+    }
+    while (fgets(data, sizeof(data), fp) != nullptr)
+    {
+        if (strncmp(data, name, strlen(name)) != 0) // find username
+            continue;
+
+        if (strncmp(strchr(data, ' ') + 1, pass, strlen(pass)) != 0)
+            return false; // invalid passwd
+
+        // valid passwd
+        fclose(fp);
+        strcpy(file, data_dir);
+        strcat(file, userstat);
+        fp = fopen(file, "w+");
+        if (!fp)
+        {
+            perror("File opening failed");
+            exit(EXIT_FAILURE);
+        }
+        strcat(name, " on"); // change the status of the user to ON
+        fwrite(name, 1, strlen(name), fp);
+        fclose(fp);
+        return true; // success
+    }
+    return false; // invalid username
 }
