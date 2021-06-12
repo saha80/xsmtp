@@ -18,8 +18,8 @@
 //
 //
 
-#include "module_user.h"
-#include "module_mail.h"
+#include "module_user.hpp"
+#include "module_mail.hpp"
 
 using namespace std;
 
@@ -142,8 +142,8 @@ bool check_name_pass(const char *const name, const char *const pass)
             perror("File opening failed");
             exit(EXIT_FAILURE);
         }
-        strcat(name, " on"); // change the status of the user to ON
-        fwrite(name, 1, strlen(name), fp);
+        const auto new_status = name + " on"s; // change the status of the user to ON
+        fwrite(new_status.c_str(), 1, strlen(new_status.c_str()), fp);
         fclose(fp);
         return true; // success
     }

@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "common.h"
-#include "module_mail.h"
-#include "module_user.h"
+#include "common.hpp"
+#include "module_mail.hpp"
+#include "module_user.hpp"
 
 class xsmtp_server
 {

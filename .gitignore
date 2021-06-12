@@ -1,6 +1,6 @@
 # folders
-./data/
-./.vscode/
+data/
+.vscode/
 
 # compilation and executable files 
 *.o

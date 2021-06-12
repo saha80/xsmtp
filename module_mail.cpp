@@ -18,8 +18,8 @@
 //
 //
 
-#include "module_mail.h"
-#include "module_user.h"
+#include "module_mail.hpp"
+#include "module_user.hpp"
 
 using namespace std;
 
@@ -154,9 +154,7 @@ void respond(const int client_sockfd, int &mail_stat, int &rcpt_user_num, const 
     {
         if ((mail_stat == 3 || mail_stat == 4) && rcpt_user_num < MAX_RCPT_USR)
         {
-            char *pa, *pb;
-            pa = strchr(request, '<');
-            pb = strchr(request, '>');
+            const auto pa = strchr(request, '<'), pb = strchr(request, '>');
             strncpy(rcpt_user[rcpt_user_num++], pa + 1, pb - pa - 1);
             send_data(client_sockfd, reply_code[6]);
             mail_stat = 4;

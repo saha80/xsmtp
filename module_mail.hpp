@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "common.hpp"
 
 // process mailing events
 void *mail_proc(void *param);

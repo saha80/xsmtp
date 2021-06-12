@@ -44,8 +44,8 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
-#include "conf.h"
-#include "messages.h"
+#include "conf.hpp"
+#include "messages.hpp"
 
 // Local Variables:
 // mode: C++

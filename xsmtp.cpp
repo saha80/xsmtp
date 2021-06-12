@@ -18,7 +18,7 @@
 //
 //
 
-#include "xsmtp.h"
+#include "xsmtp.hpp"
 
 using namespace std;
 

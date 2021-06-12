@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "common.hpp"
 
 // find if user exists
 bool check_user(const char *const from_user);

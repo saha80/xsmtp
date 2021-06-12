@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "csignal": "cpp",
-        "xiosbase": "cpp",
-        "xstring": "cpp",
-        "array": "cpp"
-    }
-}
