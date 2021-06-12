@@ -22,16 +22,9 @@
 
 // Mail Server configurations
 constexpr int PORT = 25; // use port 25, need root privilege
-#define MAX_CLIENTS 32
 constexpr int MAX_RCPT_USR = 50;
-#define BUF_SIZE 1024
 
 // User information saving configurations
 constexpr auto data_dir = "./data/";
 constexpr auto userinfo = "userinfo";
 constexpr auto userstat = "userstat";
-
-extern int mail_stat;
-extern int rcpt_user_num;
-extern char from_user[64];
-extern char rcpt_user[MAX_RCPT_USR][30];

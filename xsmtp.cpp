@@ -20,82 +20,101 @@
 
 #include "xsmtp.h"
 
+using namespace std;
+
 int mail_stat = 0;
 int rcpt_user_num = 0;
 char from_user[64] = "";
 char rcpt_user[MAX_RCPT_USR][30] = {""};
 
-int quit(int arg);
+void quit(int arg);
 
-int main(int argc, char *argv[])
+int main()
 {
-    //signal(SIGINT, (void*)quit);  //go to MiniWebQuit when Ctrl+C key pressed.
-    //signal(SIGTERM, (void*)quit); //terminal signal
-    signal(SIGPIPE, SIG_IGN); //ignore pipe signal.For more see http://www.wlug.org.nz/SIGPIPE
+    signal(SIGINT, quit);     // go to MiniWebQuit when Ctrl+C key pressed.
+    signal(SIGTERM, quit);    // terminal signal
+    signal(SIGPIPE, SIG_IGN); // ignore pipe signal. For more see http://www.wlug.org.nz/SIGPIPE
 
-    int server_sockfd, client_sockfd;
-    socklen_t sin_size;
-    struct sockaddr_in server_addr, client_addr;
+    xsmtp_server server;
+    server.server_loop();
+}
 
-    memset(&server_addr, 0, sizeof(server_addr));
-    //create socket
-    if ((server_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+void quit(int arg)
+{
+    if (arg)
     {
-        perror("S:socket create error！\n");
-        exit(1);
+        printf("\nS:Caught signal (%d). Mail server shutting down...\n", arg);
+        exit(EXIT_SUCCESS);
+    }
+}
+
+xsmtp_server::xsmtp_server() : server_sockfd_(socket(AF_INET, SOCK_STREAM, 0)) // create socket
+{
+    if (server_sockfd_ == -1)
+    {
+        perror("S:socket create error!");
+        exit(EXIT_FAILURE);
     }
 
     //set the socket's attributes
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    bzero(&(server_addr.sin_zero), 8);
+    sockaddr_in server_addr{AF_INET, htons(PORT), htonl(INADDR_ANY)};
+    memset(server_addr.sin_zero, 0, sizeof(server_addr.sin_zero));
 
-    //create a link
-    if (bind(server_sockfd, (struct sockaddr *)&server_addr,
-             sizeof(struct sockaddr)) == -1)
+    // create a link
+    if (bind(server_sockfd_, (sockaddr *)&server_addr, sizeof(sockaddr)) == -1)
     {
-        perror("S:bind error！\n");
-        exit(1);
+        perror("S:bind error!");
+        exit(EXIT_FAILURE);
     }
+
     // set to non-blocking to avoid lockout issue
-    fcntl(server_sockfd, F_SETFL, fcntl(server_sockfd, F_GETFL, 0) | O_NONBLOCK);
+    fcntl(server_sockfd_, F_SETFL, fcntl(server_sockfd_, F_GETFL, 0) | O_NONBLOCK);
 
     //listening requests from clients
-    if (listen(server_sockfd, MAX_CLIENTS - 1) == -1)
+    if (listen(server_sockfd_, SOMAXCONN) == -1)
     {
-        perror("S:listen error！\n");
-        exit(1);
+        perror("S:listen error!");
+        exit(EXIT_FAILURE);
     }
+}
+
+xsmtp_server::~xsmtp_server()
+{
+    close(server_sockfd_);
+}
+
+void xsmtp_server::server_loop()
+{
+
+    vector<pthread_t> thread_pool{};
+    vector<int> clients_sockets{};
+    thread_pool.reserve(SOMAXCONN);
+    clients_sockets.reserve(SOMAXCONN);
 
     //accept requests from clients,loop and wait.
-    cout << "================================================================\n";
-    cout << "-XSMTP mail server by [Bill Xia](ibillxia@gmail.com) started..." << endl;
-    sin_size = sizeof(client_addr);
-    while (1)
+    cout << "SMTP mail server started..." << endl;
+    while (true)
     {
-        if ((client_sockfd = accept(server_sockfd,
-                                    (struct sockaddr *)&client_addr, &sin_size)) == -1)
+        sockaddr_in client_addr;
+        socklen_t sin_size = sizeof(client_addr);
+        const int client_socket = accept(server_sockfd_, (sockaddr *)&client_addr, &sin_size);
+        if (client_socket == -1)
         {
-            //perror("S:accept error!\n");
+            // perror("S:accept error!");
             sleep(1);
             continue;
         }
-        cout << "S:received a connection from "
-             << inet_ntoa(client_addr.sin_addr) << " at "
-             << time(NULL) << endl;
-
-        pthread_t id;
-        pthread_create(&id, NULL, mail_proc, &client_sockfd);
-        pthread_join(id, NULL);
+        const auto t = time(nullptr);
+        cout << "S:received a connection from " << inet_ntoa(client_addr.sin_addr)
+             << " at " << put_time(localtime(&t), "%T")
+             << endl;
+        clients_sockets.emplace_back(client_socket);
+        thread_pool.emplace_back();
+        pthread_create(&thread_pool.back(), nullptr, mail_proc, &clients_sockets.back());
     }
-    close(client_sockfd);
-    return 0;
-}
 
-int quit(int arg)
-{
-    if (arg)
-        printf("\nS:Caught signal (%d). Mail server shutting down...\n\n", arg);
-    return 1;
+    for (auto &thread : thread_pool)
+        pthread_join(thread, nullptr);
+    for (auto &socket : clients_sockets)
+        close(socket);
 }

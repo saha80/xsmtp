@@ -21,6 +21,7 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <array>
 #include <vector>

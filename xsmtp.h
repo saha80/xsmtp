@@ -24,6 +24,17 @@
 #include "module_mail.h"
 #include "module_user.h"
 
+class xsmtp_server
+{
+private:
+    int server_sockfd_;
+
+public:
+    xsmtp_server();
+    ~xsmtp_server();
+    void server_loop() /*const*/;
+};
+
 // Local Variables:
 // mode: C++
 // End:
