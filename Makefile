@@ -6,6 +6,7 @@ OBJ_FILES = module_mail.o module_user.o xsmtp.o
 SRC_FILES = module_mail.cpp module_user.cpp xsmtp.cpp
 
 all: $(BIN_FILE)
+
 $(BIN_FILE): $(OBJ_FILES) xsmtp.cpp
 	$(CC) $(CFLAGS) $(OBJ_FILES) -o $(BIN_FILE) $(CFLAGS_EXTRA)
 
