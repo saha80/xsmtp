@@ -1,0 +1,1 @@
+rm ./ssha.o ./ssha
