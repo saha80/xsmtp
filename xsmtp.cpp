@@ -22,11 +22,6 @@
 
 using namespace std;
 
-int mail_stat = 0;
-int rcpt_user_num = 0;
-char from_user[64] = "";
-char rcpt_user[MAX_RCPT_USR][30] = {""};
-
 void quit(int arg);
 
 int main()
@@ -37,15 +32,6 @@ int main()
 
     xsmtp_server server;
     server.server_loop();
-}
-
-void quit(int arg)
-{
-    if (arg)
-    {
-        printf("\nS:Caught signal (%d). Mail server shutting down...\n", arg);
-        exit(EXIT_SUCCESS);
-    }
 }
 
 xsmtp_server::xsmtp_server() : server_sockfd_(socket(AF_INET, SOCK_STREAM, 0)) // create socket
@@ -83,16 +69,15 @@ xsmtp_server::~xsmtp_server()
     close(server_sockfd_);
 }
 
-void xsmtp_server::server_loop()
+void xsmtp_server::server_loop() const
 {
-
     vector<pthread_t> thread_pool{};
     vector<int> clients_sockets{};
     thread_pool.reserve(SOMAXCONN);
     clients_sockets.reserve(SOMAXCONN);
 
     //accept requests from clients,loop and wait.
-    cout << "SMTP mail server started..." << endl;
+    cout << "SMTP mail server started...\n";
     while (true)
     {
         sockaddr_in client_addr;
@@ -105,11 +90,11 @@ void xsmtp_server::server_loop()
             continue;
         }
         const auto t = time(nullptr);
-        cout << "S:received a connection from " << inet_ntoa(client_addr.sin_addr)
-             << " at " << put_time(localtime(&t), "%T")
-             << endl;
-        clients_sockets.emplace_back(client_socket);
+        const auto tm = localtime(&t);
+        const auto addr = inet_ntoa(client_addr.sin_addr);
+        cout << "S:received a connection from " << addr << " at " << put_time(tm, "%T") << '\n';
         thread_pool.emplace_back();
+        clients_sockets.emplace_back(client_socket);
         pthread_create(&thread_pool.back(), nullptr, mail_proc, &clients_sockets.back());
     }
 
@@ -117,4 +102,13 @@ void xsmtp_server::server_loop()
         pthread_join(thread, nullptr);
     for (auto &socket : clients_sockets)
         close(socket);
+}
+
+void quit(int arg)
+{
+    if (arg)
+    {
+        printf("\nS:Caught signal (%d). Mail server shutting down...\n", arg);
+        exit(EXIT_SUCCESS);
+    }
 }

@@ -32,9 +32,5 @@ private:
 public:
     xsmtp_server();
     ~xsmtp_server();
-    void server_loop() /*const*/;
+    void server_loop() const;
 };
-
-// Local Variables:
-// mode: C++
-// End:
