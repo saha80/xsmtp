@@ -29,22 +29,15 @@ bool check_name_pass(const char *const name, const char *const pass);
 bool check_user(const char *const from_user)
 {
     const auto strlen_from_user = strlen(from_user);
-    FILE *fp = fopen(userinfo_file, "r"); // todo: change FILE* to std::ifstream
-    char data[60];
-    if (!fp)
+    ifstream file(userinfo_file);
+    if (!file.is_open())
     {
         perror("File opening failed");
         exit(EXIT_FAILURE);
     }
-    while (fgets(data, sizeof(data), fp))
-    {
-        if (strncmp(from_user, data, strlen_from_user) == 0) // valid user
-        {
-            fclose(fp);
+    for (string line; getline(file, line);)
+        if (strncmp(from_user, line.c_str(), strlen_from_user) == 0) // valid user
             return true;
-        }
-    }
-    fclose(fp);
     return false;
 }
 
