@@ -209,31 +209,32 @@ void mail_data(const int sockfd, const char *const from_user, const array<array<
     //mail content and format check
 
     //mail content store
-    auto t = time(nullptr);
-    array<char, 80> file{};
+    array<char, 80> file_name{};
     array<char, 20> tp{}, strtime{};
 
-    sprintf(strtime.data(), "%ld", t);
+    sprintf(strtime.data(), "%ld", time(nullptr));
 
     for (int i = 0; i < rcpt_user_num; i++)
     {
-        strcpy(file.data(), data_dir);
-        strcat(file.data(), (rcpt_user[i]).data());
-        if (access(file.data(), 0) == -1)
-            mkdir(file.data(), 0777);
+        strcpy(file_name.data(), data_dir);
+        strcat(file_name.data(), (rcpt_user[i]).data());
+        if (access(file_name.data(), 0) == -1)
+            mkdir(file_name.data(), 0777);
         sprintf(tp.data(), "/%s", from_user);
-        strcat(file.data(), tp.data());
+        strcat(file_name.data(), tp.data());
         sprintf(tp.data(), ".txt");
-        strcat(file.data(), tp.data());
+        strcat(file_name.data(), tp.data());
 
-        FILE *fp = fopen(file.data(), "a");
-        fseek(fp, 0, SEEK_END);
-        if (fp)
+        ofstream file(file_name.data(), ios::app); // fopen(file.data(), "a")
+        // fseek(fp, 0, SEEK_END);
+        if (file.is_open())
         {
-            fwrite(strtime.data(), 1, strlen(strtime.data()), fp);
-            fwrite(" : ", 1, 3, fp);
-            fwrite(buf.data(), 1, strlen(buf.data()), fp);
-            fclose(fp);
+            file << strtime.data()
+                 // fwrite(strtime.data(), 1, strlen(strtime.data()), fp);
+                 << " : "
+                 // fwrite(" : ", 1, 3, fp);
+                 << buf.data();
+            // fwrite(buf.data(), 1, strlen(buf.data()), fp);
         }
         else
             perror("File opening failed");

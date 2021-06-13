@@ -43,29 +43,31 @@ bool check_user(const char *const from_user)
 
 void auth(const int sockfd, int &mail_stat)
 {
-    char ename[50], epass[50];
-    std::vector<char> name, pass;
-
     send_data(sockfd, reply_code[25]); // require username
     sleep(3);
+    vector<char> name;
+    {
+        array<char, 50> encrypted_name;
+        if (recv(sockfd, encrypted_name.data(), sizeof(encrypted_name), 0) <= 0)
+            send_data(sockfd, reply_code[16]);
 
-    if (recv(sockfd, ename, sizeof(ename), 0) <= 0)
-        send_data(sockfd, reply_code[16]);
+        cout << "Request stream: " << encrypted_name.data() << "\n";
+        name = base64_decode(encrypted_name.data());
+        cout << "Decoded username: " << name.data() << "\n";
+        send_data(sockfd, reply_code[26]); // require passwd
+        sleep(3);
+    }
+    vector<char> passwd;
+    {
+        array<char, 50> encrypted_passwd;
+        if (recv(sockfd, encrypted_passwd.data(), sizeof(encrypted_passwd), 0) <= 0)
+            send_data(sockfd, reply_code[16]);
 
-    cout << "Request stream: " << ename << "\n";
-    name = base64_decode(ename);
-    cout << "Decoded username: " << name.data() << "\n";
-    send_data(sockfd, reply_code[26]); // require passwd
-    sleep(3);
-
-    if (recv(sockfd, epass, sizeof(epass), 0) <= 0)
-        send_data(sockfd, reply_code[16]);
-
-    cout << "Request stream: " << epass << "\n";
-    pass = base64_decode(epass);
-    cout << "Decoded password: " << pass.data() << "\n";
-
-    if (check_name_pass(name.data(), pass.data())) // check username and passwd
+        cout << "Request stream: " << encrypted_passwd.data() << "\n";
+        passwd = base64_decode(encrypted_passwd.data());
+        cout << "Decoded password: " << passwd.data() << "\n";
+    }
+    if (check_name_pass(name.data(), passwd.data())) // check username and passwd
     {
         mail_stat = 13; // changing mail status
         send_data(sockfd, reply_code[27]);
@@ -77,61 +79,63 @@ void auth(const int sockfd, int &mail_stat)
 void user_quit(const char *const from_user)
 {
     const auto strlen_from_user = strlen(from_user);
-    FILE *fp = fopen(userstat_file, "w+"); // todo: change FILE* to std::ifstream
-    char data[60];
-    if (!fp)
+    fstream file(userstat_file, ios::in | ios::out | ios::trunc); // same as fopen(userstat_file, "w+")
+    if (!file.is_open())
     {
         perror("File opening failed");
         exit(EXIT_FAILURE);
     }
-    while (fgets(data, sizeof(data), fp) != nullptr)
+    for (string line; getline(file, line);)
     {
-        if (strncmp(data, from_user, strlen_from_user) == 0)
+        if (strncmp(line.c_str(), from_user, strlen_from_user) == 0)
         {
-            long len = strlen(data);
-            if (fgets(data, sizeof(data), fp) != nullptr)
+            long len = strlen(line.c_str());
+            if (getline(file, line))
             {
                 len = -len;
-                fseek(fp, len, SEEK_CUR);
-                fputs(data, fp);
-                len = strlen(data);
-                fseek(fp, len, SEEK_CUR);
+
+                file.seekp(len, ios::cur);
+                // fseek(fp, len, SEEK_CUR);
+
+                file << line; // file.write(line.data(), line.size());
+                // fputs(data, fp);
+
+                // len = strlen(data);
+                file.seekg(line.size(), ios::cur);
+                // fseek(fp, len, SEEK_CUR);
             }
         }
     }
-    fclose(fp);
 }
 
 bool check_name_pass(const char *const name, const char *const pass)
 {
-    FILE *fp;
-    char file[80], data[60];
-
-    fp = fopen(userinfo_file, "r");
-    if (!fp)
+    fstream file;
+    file.open(userinfo_file, ios::in); // fopen(userinfo_file, "r")
+    if (!file.is_open())
     {
         perror("File opening failed");
         exit(EXIT_FAILURE);
     }
-    while (fgets(data, sizeof(data), fp) != nullptr)
+    for (string line; getline(file, line);)
     {
-        if (strncmp(data, name, strlen(name)) != 0) // find username
+        if (strncmp(line.c_str(), name, strlen(name)) != 0) // find username
             continue;
 
-        if (strncmp(strchr(data, ' ') + 1, pass, strlen(pass)) != 0)
+        if (strncmp(strchr(line.c_str(), ' ') + 1, pass, strlen(pass)) != 0)
             return false; // invalid passwd
 
         // valid passwd
-        fclose(fp);
-        fp = fopen(userstat_file, "w+");
-        if (!fp)
+        file.close();
+        file.open(userstat_file, ios::in | ios::out | ios::trunc); // same as fopen(userstat_file, "w+")
+        if (!file.is_open())
         {
             perror("File opening failed");
             exit(EXIT_FAILURE);
         }
-        const auto new_status = name + " on"s; // change the status of the user to ON
-        fwrite(new_status.c_str(), 1, strlen(new_status.c_str()), fp);
-        fclose(fp);
+        const string new_status = name + " on"s; // change the status of the user to ON
+        file << new_status;
+        // fwrite(new_status.c_str(), 1, strlen(new_status.c_str()), fp);
         return true; // success
     }
     return false; // invalid username
