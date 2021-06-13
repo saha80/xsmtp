@@ -5,3 +5,6 @@
 *.o
 xsmtp
 ssha
+
+# markdown files 
+*.md
