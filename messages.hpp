@@ -22,13 +22,13 @@
 
 // help message
 constexpr auto help_reply =
-    "Enter HELO to enter send mode\n"
-    "After entring send mode use MAIL FROM:<[your email]> to declare sender\n"
-    "Command RCPT TO:<[user email]> used to ad recipient\n"
-    "You can add multiple recipients\n"
-    "After adding all recipients use command DATA\n"
-    "Then enter text that will be sent to recipients\n"
-    "\nTo exit send mode use RSET command\n";
+    "Enter HELO to enter send mode\r\n"
+    "After entring send mode use MAIL FROM:<[your email]> to declare sender\r\n"
+    "Command RCPT TO:<[user email]> used to ad recipient\r\n"
+    "You can add multiple recipients\r\n"
+    "After adding all recipients use command DATA\r\n"
+    "Then enter text that will be sent to recipients\r\n"
+    "\r\nTo exit send mode use RSET command\r\n";
 
 // SMTP server reply codes
 constexpr const char *reply_code[] = {
