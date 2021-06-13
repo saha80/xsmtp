@@ -30,11 +30,3 @@ void send_data(const int sockfd, const char *const data);
 
 // decode base64 streams
 std::vector<char> base64_decode(const char *s);
-
-//extern int check_user();
-//extern void auth(int sockfd);
-//extern void user_quit();
-
-// Local Variables:
-// mode: C++
-// End:

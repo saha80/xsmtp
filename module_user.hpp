@@ -30,10 +30,3 @@ void auth(const int sockfd, int &mail_stat);
 
 // user logout
 void user_quit(const char *const from_user);
-
-//extern void send_data(int sockfd, const char* data);
-//extern char *base64_decode(char *s);
-
-// Local Variables:
-// mode: C++
-// End:
