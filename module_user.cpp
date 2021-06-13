@@ -28,9 +28,8 @@ bool check_name_pass(const char *const name, const char *const pass);
 
 bool check_user(const char *const from_user)
 {
-    const auto file_name = string(data_dir) + userinfo;
     const auto strlen_from_user = strlen(from_user);
-    FILE *fp = fopen(file_name.c_str(), "r"); // todo: change FILE* to std::ifstream
+    FILE *fp = fopen(userinfo_file, "r"); // todo: change FILE* to std::ifstream
     char data[60];
     if (!fp)
     {
@@ -60,18 +59,18 @@ void auth(const int sockfd, int &mail_stat)
     if (recv(sockfd, ename, sizeof(ename), 0) <= 0)
         send_data(sockfd, reply_code[16]);
 
-    cout << "Request stream: " << ename << endl;
+    cout << "Request stream: " << ename << "\n";
     name = base64_decode(ename);
-    cout << "Decoded username: " << name.data() << endl;
+    cout << "Decoded username: " << name.data() << "\n";
     send_data(sockfd, reply_code[26]); // require passwd
     sleep(3);
 
     if (recv(sockfd, epass, sizeof(epass), 0) <= 0)
         send_data(sockfd, reply_code[16]);
 
-    cout << "Request stream: " << epass << endl;
+    cout << "Request stream: " << epass << "\n";
     pass = base64_decode(epass);
-    cout << "Decoded password: " << pass.data() << endl;
+    cout << "Decoded password: " << pass.data() << "\n";
 
     if (check_name_pass(name.data(), pass.data())) // check username and passwd
     {
@@ -84,9 +83,8 @@ void auth(const int sockfd, int &mail_stat)
 
 void user_quit(const char *const from_user)
 {
-    const auto file_name = string(data_dir) + userstat;
     const auto strlen_from_user = strlen(from_user);
-    FILE *fp = fopen(file_name.c_str(), "w+"); // todo: change FILE* to std::ifstream
+    FILE *fp = fopen(userstat_file, "w+"); // todo: change FILE* to std::ifstream
     char data[60];
     if (!fp)
     {
@@ -115,10 +113,8 @@ bool check_name_pass(const char *const name, const char *const pass)
 {
     FILE *fp;
     char file[80], data[60];
-    strcpy(file, data_dir);
-    strcat(file, userinfo);
 
-    fp = fopen(file, "r");
+    fp = fopen(userinfo_file, "r");
     if (!fp)
     {
         perror("File opening failed");
@@ -134,9 +130,7 @@ bool check_name_pass(const char *const name, const char *const pass)
 
         // valid passwd
         fclose(fp);
-        strcpy(file, data_dir);
-        strcat(file, userstat);
-        fp = fopen(file, "w+");
+        fp = fopen(userstat_file, "w+");
         if (!fp)
         {
             perror("File opening failed");
