@@ -26,5 +26,5 @@ constexpr int MAX_RCPT_USR = 50;
 
 // User information saving configurations
 constexpr auto data_dir = "./data/";
-constexpr auto userinfo = "userinfo";
-constexpr auto userstat = "userstat";
+constexpr auto userinfo_file = "./data/userinfo";
+constexpr auto userstat_file = "./data/userstat";

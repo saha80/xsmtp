@@ -46,7 +46,3 @@
 
 #include "conf.hpp"
 #include "messages.hpp"
-
-// Local Variables:
-// mode: C++
-// End:
