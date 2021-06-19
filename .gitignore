@@ -1,10 +1,16 @@
-# folders
-.vscode/
+# unignore .gitignore file itself
+!.gitignore
 
-# compilation and executable files 
-*.o
-xsmtp
-ssha
+# ignore all
+*
 
-# markdown files 
-*.md
+# unignore data/ directory
+!data/
+
+# unignore everything inside data/
+!data/**
+
+# unignore Makefile, *.cpp, and *.hpp files
+!Makefile
+!*.cpp
+!*.hpp
