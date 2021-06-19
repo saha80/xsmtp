@@ -28,3 +28,4 @@ constexpr int MAX_RCPT_USR = 50;
 constexpr auto data_dir = "./data/";
 constexpr auto userinfo_file = "./data/userinfo";
 constexpr auto userstat_file = "./data/userstat";
+constexpr auto useraccs_file = "./data/useraccs.txt";
