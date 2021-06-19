@@ -38,28 +38,27 @@ string create_hash(const string &salted_pass)
     return string(pass_enc.begin(), pass_enc.end());
 }
 
-int main(int argc, char **argv)
+void save_to_useraccs_file(const string &user_name, const string &hashed_pass, const string &salt)
 {
-    try
-    {
-        if (argc != 3)
-        {
-            cout << "Usage: program_name [username to register] [password]\n";
-            return 0;
-        }
-        const string salt = create_salt();
-        ofstream file(useraccs_file, ios::app);
-        file.exceptions(ios::failbit | ios::badbit);
+    ofstream file(useraccs_file, ios::app);
+    file.exceptions(ios::failbit | ios::badbit);
+    file << user_name << ' ' << hashed_pass << ' ' << salt << '\n';
+}
 
-        file << argv[1] << " " << create_hash(argv[2] + salt) << " " << salt << "\n";
+int main(int argc, char **argv)
+try
+{
+    if (argc != 3)
+        throw logic_error("Usage: program_name [username to register] [password]");
 
-        cout << "User registration complete.\n";
-    }
-    catch (const exception &e)
-    {
-        cerr << e.what() << "\n";
-    }
-    catch (...)
-    {
-    }
+    const string salt = create_salt();
+    save_to_useraccs_file(argv[1], create_hash(argv[2] + salt), salt);
+    cout << "User registration complete.\n";
+}
+catch (const exception &e)
+{
+    cerr << e.what() << "\n";
+}
+catch (...)
+{
 }
